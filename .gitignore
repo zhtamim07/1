@@ -1,0 +1,39 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android
+android/key.properties
+android/app/src/main/res/drawable-*/
+android/app/src/main/res/mipmap-*/
+
+# iOS
+ios/.generated/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/App.podspec
+ios/Flutter/App.xcframework
+ios/Pods/
+ios/Podfile.lock
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+ios/Runner/GeneratedPluginRegistrant.swift
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+*.iws
+
+# Sensitive
+.env
+*.keystore
+*.jks
+
+# macOS
+.DS_Store
