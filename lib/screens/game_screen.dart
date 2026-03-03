@@ -6,8 +6,13 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:battery_plus/battery_plus.dart';
+import 'package:vibration/vibration.dart';
+import 'package:screen_brightness/screen_brightness.dart';
+import 'package:volume_controller/volume_controller.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'settings_screen.dart';
 import 'virtual_controller.dart';
+import 'wallpaper_screen.dart';
 
 // ── Stream stats model ────────────────────────────────────────────────────────
 class StreamStats {
@@ -74,6 +79,22 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     WakelockPlus.enable();
     _loadSettings();
     _listenBattery();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    WakelockPlus.disable();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      WakelockPlus.enable();
+    } else if (state == AppLifecycleState.paused) {
+      WakelockPlus.disable();
+    }
   }
 
   void _listenBattery() {
@@ -213,9 +234,89 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             ),
             onWebViewCreated: (c) {
               _webViewController = c;
+              
               c.addJavaScriptHandler(handlerName: 'onStreamStats', callback: (args) {
                 if (args.isNotEmpty) setState(() => _stats = StreamStats.fromJson(jsonDecode(args[0])));
               });
+
+              // BxC Native Handlers Ported from Android
+              c.addJavaScriptHandler(handlerName: 'vibrate', callback: (args) async {
+                if (args.length >= 2) {
+                  final String jsonStr = args[0];
+                  final double intensity = (args[1] as num).toDouble();
+                  if (intensity > 0) {
+                     // In a full implementation, we'd parse the JSON for specific motors
+                     // For iOS, trigger a heavy impact haptic when instructed
+                     final int durationMs = (intensity * 100).toInt();
+                     try {
+                        await Vibration.vibrate(duration: durationMs.clamp(50, 500), amplitude: (intensity * 255).toInt().clamp(1, 255));
+                     } catch(e) {
+                        debugPrint("Vibration error: \$e");
+                     }
+                  } else {
+                     Vibration.cancel();
+                  }
+                }
+              });
+
+              c.addJavaScriptHandler(handlerName: 'saveScreenshot', callback: (args) async {
+                 if (args.length >= 2) {
+                    final String name = args[0];
+                    final String data = args[1]; // Base64 data from Web
+                    try {
+                      final parts = data.split(',');
+                      final bytes = base64Decode(parts.length > 1 ? parts[1] : parts[0]);
+                      final result = await ImageGallerySaver.saveImage(bytes, name: name);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['isSuccess'] ? 'Screenshot saved to Photos' : 'Failed to save screenshot')));
+                      }
+                      Vibration.vibrate(duration: 100);
+                    } catch(e) {
+                      debugPrint('Screenshot save error: \$e');
+                    }
+                 }
+              });
+
+              c.addJavaScriptHandler(handlerName: 'runShortcut', callback: (args) async {
+                 if (args.isNotEmpty) {
+                    final String action = args[0];
+                    switch(action) {
+                      case 'device.brightness.dec':
+                        final cur = await ScreenBrightness().current;
+                        await ScreenBrightness().setScreenBrightness((cur - 0.1).clamp(0.0, 1.0));
+                        break;
+                      case 'device.brightness.inc':
+                        final cur = await ScreenBrightness().current;
+                        await ScreenBrightness().setScreenBrightness((cur + 0.1).clamp(0.0, 1.0));
+                        break;
+                      case 'device.volume.dec':
+                        final cur = await VolumeController().getVolume();
+                        VolumeController().setVolume((cur - 0.1).clamp(0.0, 1.0));
+                        break;
+                      case 'device.volume.inc':
+                        final cur = await VolumeController().getVolume();
+                        VolumeController().setVolume((cur + 0.1).clamp(0.0, 1.0));
+                        break;
+                    }
+                 }
+              });
+
+              c.addJavaScriptHandler(handlerName: 'downloadWallpapers', callback: (args) {
+                 if (args.length >= 2) {
+                   final titleSlug = args[0];
+                   final productId = args[1];
+                   if (mounted) {
+                      Navigator.push(context, MaterialPageRoute(
+                         builder: (_) => WallpaperScreen(
+                            titleSlug: titleSlug,
+                            productId: productId,
+                         )
+                      ));
+                   }
+                   Vibration.vibrate(duration: 50);
+                 }
+              });
+              
             },
             onLoadStop: _onLoadStop,
             onProgressChanged: (c, p) => setState(() => _loadingProgress = p / 100.0),

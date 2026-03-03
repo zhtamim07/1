@@ -49,7 +49,7 @@ class VirtualController extends StatefulWidget {
   State<VirtualController> createState() => _VirtualControllerState();
 }
 
-class _VirtualControllerState extends State<VirtualController> {
+class _VirtualControllerState extends State<VirtualController> with WidgetsBindingObserver {
   late final VirtualGamepadBridge _bridge;
   Offset _lsOffset = Offset.zero;
   Offset _rsOffset = Offset.zero;
@@ -61,8 +61,41 @@ class _VirtualControllerState extends State<VirtualController> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bridge = VirtualGamepadBridge(widget.webController);
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _resetAllInputs();
+    }
+  }
+
+  void _resetAllInputs() {
+    for (int btn in _pressed) {
+      _bridge.pressButton(btn, false);
+    }
+    _bridge.setTrigger(GpBtn.lt, 0.0);
+    _bridge.setTrigger(GpBtn.rt, 0.0);
+    _bridge.setAxis(GpAx.lsX, 0.0);
+    _bridge.setAxis(GpAx.lsY, 0.0);
+    _bridge.setAxis(GpAx.rsX, 0.0);
+    _bridge.setAxis(GpAx.rsY, 0.0);
+    if (mounted) {
+      setState(() {
+        _pressed.clear();
+        _lsOffset = Offset.zero;
+        _rsOffset = Offset.zero;
+      });
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -96,9 +129,14 @@ class _VirtualControllerState extends State<VirtualController> {
     required VoidCallback onRelease,
     int? pressButton,
   }) {
-    return GestureDetector(
-      onPanUpdate: (d) => _updateStick(d.localPosition, axisX, axisY, onUpdate),
-      onPanEnd: (_) {
+    return Listener(
+      onPointerDown: (e) => _updateStick(e.localPosition, axisX, axisY, onUpdate),
+      onPointerMove: (e) => _updateStick(e.localPosition, axisX, axisY, onUpdate),
+      onPointerUp: (_) {
+        _bridge.setAxis(axisX, 0); _bridge.setAxis(axisY, 0);
+        onRelease();
+      },
+      onPointerCancel: (_) {
         _bridge.setAxis(axisX, 0); _bridge.setAxis(axisY, 0);
         onRelease();
       },
@@ -139,10 +177,10 @@ class _VirtualControllerState extends State<VirtualController> {
 
   Widget _faceButton(int btn, String label, Color color) {
     final pressed = _pressed.contains(btn);
-    return GestureDetector(
-      onTapDown: (_) { setState(() => _pressed.add(btn)); _bridge.pressButton(btn, true); },
-      onTapUp: (_) { setState(() => _pressed.remove(btn)); _bridge.pressButton(btn, false); },
-      onTapCancel: () { setState(() => _pressed.remove(btn)); _bridge.pressButton(btn, false); },
+    return Listener(
+      onPointerDown: (_) { setState(() => _pressed.add(btn)); _bridge.pressButton(btn, true); },
+      onPointerUp: (_) { setState(() => _pressed.remove(btn)); _bridge.pressButton(btn, false); },
+      onPointerCancel: (_) { setState(() => _pressed.remove(btn)); _bridge.pressButton(btn, false); },
       child: Container(
         width: 50, height: 50,
         decoration: BoxDecoration(
@@ -157,12 +195,16 @@ class _VirtualControllerState extends State<VirtualController> {
 
   Widget _shoulderButton(int btn, String label, {bool isTrigger = false}) {
     final pressed = _pressed.contains(btn);
-    return GestureDetector(
-      onTapDown: (_) { 
+    return Listener(
+      onPointerDown: (_) { 
         setState(() => _pressed.add(btn)); 
         isTrigger ? _bridge.setTrigger(btn, 1.0) : _bridge.pressButton(btn, true); 
       },
-      onTapUp: (_) { 
+      onPointerUp: (_) { 
+        setState(() => _pressed.remove(btn)); 
+        isTrigger ? _bridge.setTrigger(btn, 0.0) : _bridge.pressButton(btn, false);
+      },
+      onPointerCancel: (_) { 
         setState(() => _pressed.remove(btn)); 
         isTrigger ? _bridge.setTrigger(btn, 0.0) : _bridge.pressButton(btn, false);
       },
