@@ -6,7 +6,7 @@ class GamePassApi {
 
   static Future<Map<String, dynamic>?> getTitleInfo(String productId, {String region = 'US', String language = 'en-US'}) async {
     try {
-      final uri = Uri.parse('\$baseUrl?bigIds=\$productId&market=\$region&languages=\$language&MS-CV=DUMMY.1');
+      final uri = Uri.parse('$baseUrl?bigIds=$productId&market=$region&languages=$language&MS-CV=DUMMY.1');
       final response = await http.get(uri);
       
       if (response.statusCode == 200) {
@@ -17,7 +17,7 @@ class GamePassApi {
       }
       return null;
     } catch (e) {
-      print('Failed to get title info: \$e');
+      print('Failed to get title info: $e');
       return null;
     }
   }
@@ -36,7 +36,7 @@ class GamePassApi {
         }
       }
     } catch (e) {
-      print('Failed to extract image: \$e');
+      print('Failed to extract image: $e');
     }
     return null;
   }
