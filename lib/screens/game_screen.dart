@@ -251,7 +251,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                      try {
                         await Vibration.vibrate(duration: durationMs.clamp(50, 500), amplitude: (intensity * 255).toInt().clamp(1, 255));
                      } catch(e) {
-                        debugPrint("Vibration error: \$e");
+                        debugPrint("Vibration error: $e");
                      }
                   } else {
                      Vibration.cancel();
@@ -272,7 +272,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       }
                       Vibration.vibrate(duration: 100);
                     } catch(e) {
-                      debugPrint('Screenshot save error: \$e');
+                      debugPrint('Screenshot save error: $e');
                     }
                  }
               });

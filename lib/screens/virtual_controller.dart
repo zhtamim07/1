@@ -248,6 +248,7 @@ class _VirtualControllerState extends State<VirtualController> with WidgetsBindi
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildThumbstick(offset: _lsOffset, axisX: GpAx.lsX, axisY: GpAx.lsY, onUpdate: (o) => setState(() => _lsOffset = o), onRelease: () => setState(() => _lsOffset = Offset.zero)),
+                  _buildThumbstick(offset: _rsOffset, axisX: GpAx.rsX, axisY: GpAx.rsY, onUpdate: (o) => setState(() => _rsOffset = o), onRelease: () => setState(() => _rsOffset = Offset.zero)),
                   Stack(
                     alignment: Alignment.center,
                     children: [

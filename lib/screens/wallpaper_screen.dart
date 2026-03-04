@@ -37,9 +37,9 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
       final bannerTitled = GamePassApi.extractImageUrl(titleInfo, 'TitledHero');
 
       setState(() {
-        if (banner != null) _wallpapers['Banner'] = '\$banner?format=png';
-        if (poster != null) _wallpapers['Poster'] = '\$poster?format=png';
-        if (bannerTitled != null) _wallpapers['Titled Banner'] = '\$bannerTitled?format=png';
+        if (banner != null) _wallpapers['Banner'] = '$banner?format=png';
+        if (poster != null) _wallpapers['Poster'] = '$poster?format=png';
+        if (bannerTitled != null) _wallpapers['Titled Banner'] = '$bannerTitled?format=png';
         _isLoading = false;
       });
     } else {
@@ -49,14 +49,14 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
   }
 
   Future<void> _downloadWallpaper(String url, String name) async {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloading \$name...')));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloading $name...')));
     try {
       var response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final result = await ImageGallerySaver.saveImage(
             Uint8List.fromList(response.bodyBytes),
             quality: 100,
-            name: "\${widget.titleSlug}_\$name");
+            name: "${widget.titleSlug}_$name");
             
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
@@ -73,7 +73,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Wallpapers: \${widget.titleSlug}'),
+        title: Text('Wallpapers: ${widget.titleSlug}'),
       ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())

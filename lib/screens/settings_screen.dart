@@ -50,7 +50,7 @@ class BxcSettings {
       videoContrast:      prefs.getDouble(videoContrast)   ?? 1.0,
       videoSaturation:    prefs.getDouble(videoSaturation) ?? 1.0,
       
-      maxBitrate:         prefs.getInt(maxBitrate)         ?? 0, // 0 = no limit
+      maxBitrate:         prefs.getDouble(maxBitrate)      ?? 0.0, // 0 = no limit
       volumeBoost:        prefs.getDouble(volumeBoost)      ?? 1.0,
       aspectRatio:        prefs.getString(aspectRatio)     ?? 'contain',
       statsPosition:      prefs.getString(statsPosition)   ?? 'top_right',
@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 15)),
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12)),
       value: _prefs.getBool(key) ?? def,
-      activeColor: const Color(0xFF107C10),
+      activeTrackColor: const Color(0xFF107C10),
       onChanged: (v) => setState(() => _prefs.setBool(key, v)),
     );
   }

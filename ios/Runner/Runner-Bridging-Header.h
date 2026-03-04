@@ -1,4 +1,1 @@
-//
-//  Runner - Bridging Header
-//
-
+#import "GeneratedPluginRegistrant.h"
